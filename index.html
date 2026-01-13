@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Chat</title>
+    <style>
+        body { font-family: Arial; }
+        #chat { height: 300px; border: 1px solid #ccc; overflow-y: auto; padding: 10px; }
+    </style>
+</head>
+<body>
+
+<h2>Chat App</h2>
+<input id="username" placeholder="Username" />
+<button onclick="joinChat()">Join</button>
+
+<div id="chat"></div>
+
+<input id="message" placeholder="Type a message" />
+<button onclick="sendMessage()">Send</button>
+
+<script>
+    let socket;
+
+    function joinChat() {
+        const username = document.getElementById("username").value;
+        socket = new WebSocket("ws://localhost:8080");
+
+        socket.onopen = () => {
+            socket.send(JSON.stringify({
+                type: "join",
+                username
+            }));
+        };
+
+        socket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            const chat = document.getElementById("chat");
+
+            if (data.type === "message") {
+                chat.innerHTML += `<p><b>${data.username}:</b> ${data.text}</p>`;
+            }
+
+            if (data.type === "notification") {
+                chat.innerHTML += `<p><i>${data.text}</i></p>`;
+            }
+
+            chat.scrollTop = chat.scrollHeight;
+        };
+    }
+
+    function sendMessage() {
+        const text = document.getElementById("message").value;
+
+        socket.send(JSON.stringify({
+            type: "message",
+            text
+        }));
+
+        document.getElementById("message").value = "";
+    }
+</script>
+
+</body>
+</html>
